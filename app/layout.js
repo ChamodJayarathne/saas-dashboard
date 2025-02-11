@@ -1,22 +1,26 @@
+
 import "./globals.css";
 import Nav from "./(components)/Nav";
 import LayoutClient from "./LayoutClient";
 import { SidebarProvider } from "./(components)/SidebarProvider";
 import AuthProvider from "./(components)/AuthProvider";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const RootLayout = ({ children }) => {
   return (
     <html lang="en">
-      <AuthProvider>
-        <body>
-          <div className="min-h-screen bg-gray-50">
+      <body>
+        <AuthProvider>
+          <NotificationProvider>
             <SidebarProvider>
-              <Nav />
-              <LayoutClient>{children}</LayoutClient>
+              <div className="min-h-screen bg-gray-50">
+                <Nav />
+                <LayoutClient>{children}</LayoutClient>
+              </div>
             </SidebarProvider>
-          </div>
-        </body>
-      </AuthProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 };

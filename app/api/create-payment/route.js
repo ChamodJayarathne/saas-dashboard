@@ -11,7 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
   try {
-    // 1. Connect to DB and check authentication
+    
     await connectDB();
     const session = await getServerSession(options);
 
@@ -19,10 +19,10 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 2. Get request data
+   
     const { productId, price, title } = await req.json();
 
-    // 3. Validate required fields
+    
     if (!productId || !price || !title) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -30,7 +30,7 @@ export async function POST(req) {
       );
     }
 
-    // 4. Create Stripe session
+  
     const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -55,7 +55,7 @@ export async function POST(req) {
       },
     });
 
-    // 5. Create payment record
+  
     const payment = new Payment({
       userId: new ObjectId(session.user.id),
       productId: productId,
@@ -68,7 +68,7 @@ export async function POST(req) {
 
     await payment.save();
 
-    // 6. Return success response
+ 
     return NextResponse.json({ url: stripeSession.url });
     
   } catch (error) {

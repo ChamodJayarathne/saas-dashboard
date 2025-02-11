@@ -13,6 +13,7 @@ import {
   Home,
 } from "lucide-react";
 import Link from "next/link";
+import NotificationBell from "@/components/NotificationBell";
 
 const NavClient = ({ session }) => {
 
@@ -50,14 +51,15 @@ const NavClient = ({ session }) => {
             <h1 className="text-black text-xl font-semibold">Dashboard</h1>
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative">
+            {/* <div className="relative">
               <button className="p-2 rounded-lg hover:bg-gray-100">
                 <Bell className="w-6 h-6 text-black" />
                 {notifications.length > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
-            </div>
+            </div> */}
+             <NotificationBell />
 
             {session ? (
               <div className="flex items-center gap-2">
