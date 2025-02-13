@@ -17,6 +17,7 @@ export const options = {
         return {
           ...profile,
           role: userRole,
+          image: profile.avatar_url,
         };
       },
       clientId: process.env.GITHUB_ID,
@@ -31,6 +32,7 @@ export const options = {
           ...profile,
           id: profile.sub,
           role: userRole,
+          image: profile.picture,
         };
       },
       clientId: process.env.GOOGLE_ID,
@@ -64,9 +66,10 @@ export const options = {
             );
 
             if (match) {
-              console.log("Cood pass");
+              console.log("Good pass");
               delete foundUser.password;
               foundUser["role"] = "Unverified Email";
+              foundUser["image"] = foundUser.image || "/default-avatar.png";
               return foundUser;
             }
           }
@@ -82,7 +85,7 @@ export const options = {
       //   if (user) token.role = user.role;
       if (user) {
         token.id = user.id;
-        token.role = user.role; 
+        token.role = user.role;
       }
       return token;
     },

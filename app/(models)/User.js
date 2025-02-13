@@ -19,6 +19,7 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    image: { type: String, default: "/default-avatar.png" }, // Add image URL field
   },
   {
     timestamps: true,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, createContext, useContext } from "react";
+import React, { useState, createContext, useContext, useMemo } from "react";
 import { useSidebar } from "./SidebarProvider";
 import {
   Menu,
@@ -13,30 +13,34 @@ import {
   Home,
 } from "lucide-react";
 import Link from "next/link";
-import NotificationBell from "@/components/NotificationBell";
+import Image from "next/image";
+// import NotificationBell from "@/components/NotificationBell";
 
 const NavClient = ({ session }) => {
-
   const { isSidebarOpen, setIsSidebarOpen } = useSidebar();
   const [notifications, setNotifications] = useState([]);
 
-  const menuItems = [
-    { icon: Home, label: "Overview", path: "/" },
-    { icon: BarChart, label: "Analytics", path: "/analytics" },
-    { icon: CreditCard, label: "Billing", path: "/billing" },
-  
-  ];
+  const menuItems = useMemo(
+    () => [
+      { icon: Home, label: "Overview", path: "/" },
+      { icon: BarChart, label: "Analytics", path: "/analytics" },
+      { icon: CreditCard, label: "Billing", path: "/billing" },
+    ],
+    []
+  );
 
-  const menuItem = [
-    { icon: Home, label: "Overview", path: "/" },
-    { icon: BarChart, label: "Analytics", path: "/analytics" },
-    { icon: Users, label: "Users", path: "/users" },
-    { icon: CreditCard, label: "Billing", path: "/billing" },
-    { icon: Settings, label: "Settings", path: "/settings" },
-  ];
+  const menuItem = useMemo(
+    () => [
+      { icon: Home, label: "Overview", path: "/" },
+      { icon: BarChart, label: "Analytics", path: "/analytics" },
+      { icon: Users, label: "Users", path: "/users" },
+      { icon: CreditCard, label: "Billing", path: "/billing" },
+      { icon: Settings, label: "Settings", path: "/settings" },
+    ],
+    []
+  );
 
   return (
- 
     <div className=" bg-gray-50">
       {/* Header */}
       <header className="fixed top-0 w-full bg-white border-b z-40">
@@ -51,25 +55,36 @@ const NavClient = ({ session }) => {
             <h1 className="text-black text-xl font-semibold">Dashboard</h1>
           </div>
           <div className="flex items-center gap-4">
-            {/* <div className="relative">
+            <div className="relative">
               <button className="p-2 rounded-lg hover:bg-gray-100">
                 <Bell className="w-6 h-6 text-black" />
                 {notifications.length > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
-            </div> */}
-             <NotificationBell />
+            </div>
+            {/* <NotificationBell /> */}
 
             {session ? (
               <div className="flex items-center gap-2">
                 <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
                   {/* <User className="w-6 h-6 text-black" /> */}
-                  <img
+                  {/* <img
                     src={session?.user?.profile?.avatar_url}
                     alt=""
                     className="h-12 w-12 rounded-full overflow-hidden"
-                  />
+                  /> */}
+                  {session.user?.image ? (
+                    <Image
+                      src={session?.user?.image}
+                      alt="Profile"
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-full"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-black" />
+                  )}
                   <span className="hidden sm:inline text-black">Profile</span>
                 </button>
                 <Link
