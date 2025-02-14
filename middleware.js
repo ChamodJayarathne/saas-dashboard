@@ -1,113 +1,123 @@
-// import withAuth from "next-auth/middleware";
-// import { NextResponse } from "next/server";
+// import { NextResponse } from 'next/server';
+// import { withAuth } from 'next-auth/middleware';
 
 // export default withAuth(
 //   function middleware(req) {
-//     console.log(req.nextUrl.pathname);
-//     console.log(req.nextauth.token.role);
+//     const { pathname } = req.nextUrl;
+//     const { token } = req.nextauth;
 
-//     if (
-//       req.nextUrl.pathname.startsWith("/CreateUser") &&
-//       req.nextauth.token.role != "admin"
-//     ) {
-//       return NextResponse.rewrite(new URL("/Denied", req.url));
+//     // Logging for debugging (optional)
+//     console.log('Path:', pathname);
+//     console.log('User Role:', token?.role);
+
+//     // Role-based access control
+//     if (pathname.startsWith('/CreateUser') && token?.role !== 'admin') {
+//       return NextResponse.rewrite(new URL('/Denied', req.url));
 //     }
-//     if (req.nextUrl.pathname.startsWith("/api/notifications")) {
-//       if (!req.nextauth.token) {
-//         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//       }
+
+//     // Cache static pages and API routes
+//     const response = NextResponse.next();
+
+//     // Cache static pages
+//     const staticPaths = ['/', '/analytics', '/billing', '/dashboard'];
+//     if (staticPaths.includes(pathname)) {
+//       response.headers.set(
+//         'Cache-Control',
+//         'public, s-maxage=3600, stale-while-revalidate=1800, max-age=600'
+//       );
 //     }
+
+//     // Cache API responses
+//     if (pathname.startsWith('/api/products') || pathname.startsWith('/api/users')) {
+//       response.headers.set(
+//         'Cache-Control',
+//         'public, s-maxage=3600, stale-while-revalidate=1800'
+//       );
+//     }
+
+//     return response;
 //   },
 //   {
 //     callbacks: {
-//       authrized: ({ token }) => !token,
+//       authorized: ({ token }) => !!token, // Ensure user is authenticated
 //     },
 //   }
 // );
 
-// export const config = { matcher: ["/CreateUser", "/api/notifications/:path*"] };
+// // Middleware matcher configuration
+// export const config = {
+//   matcher: [
+//     '/CreateUser', // Existing protected route
+//     '/', // Cache static pages
+//     '/analytics',
+//     '/billing',
+//     '/dashboard',
+//     '/api/products/:path*', // Cache API routes
+//     '/api/users/:path*',
+//   ],
+// };
 
+// middleware.js
+import { wrapMiddlewareWithSentry} from "@sentry/nextjs";
+import { NextResponse } from "next/server";
+import { withAuth } from "next-auth/middleware";
 
-// import withAuth from "next-auth/middleware";
-// import { NextResponse } from "next/server";
+export default wrapMiddlewareWithSentry(
+  withAuth(
+    function middleware(req) {
+      const { pathname } = req.nextUrl;
+      const { token } = req.nextauth;
 
-// export default withAuth(
-//   function (req) {
-//     console.log(req.nextUrl.pathname);
-//     console.log(req.nextauth.token.role);
+      // Logging for debugging (optional)
+      console.log("Path:", pathname);
+      console.log("User Role:", token?.role);
 
-//     if (
-//       req.nextUrl.pathname.startsWith("/CreateUser") &&
-//       req.nextauth.token.role != "admin"
-//     ) {
-//       return NextResponse.rewrite(new URL("/Denied", req.url));
-//     }
-//   },
-//   {
-//     callbacks: {
-//       authrized: ({ token }) => !token,
-//     },
-//   }
-// );
+      // Role-based access control
+      if (pathname.startsWith("/CreateUser") && token?.role !== "admin") {
+        return NextResponse.rewrite(new URL("/Denied", req.url));
+      }
 
-// export const config = { matcher: ["/CreateUser"] };
+      // Cache static pages and API routes
+      const response = NextResponse.next();
 
+      // Cache static pages
+      const staticPaths = ["/", "/analytics", "/billing", "/dashboard"];
+      if (staticPaths.includes(pathname)) {
+        response.headers.set(
+          "Cache-Control",
+          "public, s-maxage=3600, stale-while-revalidate=1800, max-age=600"
+        );
+      }
 
-import { NextResponse } from 'next/server';
-import { withAuth } from 'next-auth/middleware';
+      // Cache API responses
+      if (
+        pathname.startsWith("/api/products") ||
+        pathname.startsWith("/api/users")
+      ) {
+        response.headers.set(
+          "Cache-Control",
+          "public, s-maxage=3600, stale-while-revalidate=1800"
+        );
+      }
 
-export default withAuth(
-  function middleware(req) {
-    const { pathname } = req.nextUrl;
-    const { token } = req.nextauth;
-
-    // Logging for debugging (optional)
-    console.log('Path:', pathname);
-    console.log('User Role:', token?.role);
-
-    // Role-based access control
-    if (pathname.startsWith('/CreateUser') && token?.role !== 'admin') {
-      return NextResponse.rewrite(new URL('/Denied', req.url));
-    }
-
-    // Cache static pages and API routes
-    const response = NextResponse.next();
-
-    // Cache static pages
-    const staticPaths = ['/', '/analytics', '/billing', '/dashboard'];
-    if (staticPaths.includes(pathname)) {
-      response.headers.set(
-        'Cache-Control',
-        'public, s-maxage=3600, stale-while-revalidate=1800, max-age=600'
-      );
-    }
-
-    // Cache API responses
-    if (pathname.startsWith('/api/products') || pathname.startsWith('/api/users')) {
-      response.headers.set(
-        'Cache-Control',
-        'public, s-maxage=3600, stale-while-revalidate=1800'
-      );
-    }
-
-    return response;
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token, // Ensure user is authenticated
+      return response;
     },
-  }
+    {
+      callbacks: {
+        authorized: ({ token }) => !!token,
+      },
+    }
+  )
 );
 
-// Middleware matcher configuration
 export const config = {
   matcher: [
-    '/CreateUser', // Existing protected route
-    '/', // Cache static pages
-    '/analytics',
-    '/billing',
-    '/dashboard',
-    '/api/products/:path*', // Cache API routes
-    '/api/users/:path*',
+    "/CreateUser", // Existing protected route
+    "/", // Cache static pages
+    "/analytics",
+    "/billing",
+    "/dashboard",
+    "/api/products/:path*", // Cache API routes
+    "/api/users/:path*",
   ],
 };

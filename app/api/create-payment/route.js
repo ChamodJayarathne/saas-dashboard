@@ -1,4 +1,5 @@
 
+
 // import { NextResponse } from "next/server";
 // import Stripe from "stripe";
 // import { getServerSession } from "next-auth";
@@ -11,26 +12,29 @@
 
 // export async function POST(req) {
 //   try {
-    
+//     // 1. Connect to DB and check authentication
 //     await connectDB();
 //     const session = await getServerSession(options);
 
 //     if (!session || !session.user) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-   
-//     const { productId, price, title } = await req.json();
-
-    
-//     if (!productId || !price || !title) {
 //       return NextResponse.json(
-//         { error: "Missing required fields" },
-//         { status: 400 }
+//         { error: "Unauthorized" },
+//         { status: 401, headers: { "Cache-Control": "no-store" } } // No caching for unauthorized responses
 //       );
 //     }
 
-  
+//     // 2. Get request data
+//     const { productId, price, title } = await req.json();
+
+//     // 3. Validate required fields
+//     if (!productId || !price || !title) {
+//       return NextResponse.json(
+//         { error: "Missing required fields" },
+//         { status: 400, headers: { "Cache-Control": "no-store" } } // No caching for invalid requests
+//       );
+//     }
+
+//     // 4. Create Stripe session
 //     const stripeSession = await stripe.checkout.sessions.create({
 //       payment_method_types: ["card"],
 //       line_items: [
@@ -55,7 +59,7 @@
 //       },
 //     });
 
-  
+//     // 5. Create payment record
 //     const payment = new Payment({
 //       userId: new ObjectId(session.user.id),
 //       productId: productId,
@@ -68,18 +72,23 @@
 
 //     await payment.save();
 
- 
-//     return NextResponse.json({ url: stripeSession.url });
-    
+//     // 6. Return success response with caching headers
+//     return NextResponse.json(
+//       { url: stripeSession.url },
+//       {
+//         headers: {
+//           "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=1800", // Cache for 1 hour
+//         },
+//       }
+//     );
 //   } catch (error) {
 //     console.error("Payment error:", error);
 //     return NextResponse.json(
 //       { error: "Payment initialization failed", details: error.message },
-//       { status: 500 }
+//       { status: 500, headers: { "Cache-Control": "no-store" } } // No caching for errors
 //     );
 //   }
 // }
-
 
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -88,19 +97,26 @@ import { options } from "../auth/[...nextauth]/options";
 import Payment from "@/models/Payment";
 import { connectDB } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import * as Sentry from "@sentry/nextjs";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
+  const transaction = Sentry.startTransaction({
+    op: "paymentProcessing",
+    name: "Process Payment",
+  });
+
   try {
     // 1. Connect to DB and check authentication
     await connectDB();
     const session = await getServerSession(options);
 
     if (!session || !session.user) {
+      Sentry.captureMessage("Unauthorized payment attempt");
       return NextResponse.json(
         { error: "Unauthorized" },
-        { status: 401, headers: { "Cache-Control": "no-store" } } // No caching for unauthorized responses
+        { status: 401, headers: { "Cache-Control": "no-store" } }
       );
     }
 
@@ -109,9 +125,10 @@ export async function POST(req) {
 
     // 3. Validate required fields
     if (!productId || !price || !title) {
+      Sentry.captureMessage("Missing required fields in payment request");
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400, headers: { "Cache-Control": "no-store" } } // No caching for invalid requests
+        { error: "Product ID, price, and title are required" },
+        { status: 400, headers: { "Cache-Control": "no-store" } }
       );
     }
 
@@ -153,20 +170,40 @@ export async function POST(req) {
 
     await payment.save();
 
-    // 6. Return success response with caching headers
+    Sentry.addBreadcrumb({
+      category: "payment",
+      message: `Payment session created for user ${session.user.id}`,
+      level: Sentry.Severity.Info,
+    });
+
+    // 6. Return success response
     return NextResponse.json(
       { url: stripeSession.url },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=1800", // Cache for 1 hour
+          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=1800",
         },
       }
     );
   } catch (error) {
-    console.error("Payment error:", error);
+    Sentry.captureException(error, {
+      tags: { route: "POST /api/payment" },
+      extra: { session: session?.user },
+    });
     return NextResponse.json(
       { error: "Payment initialization failed", details: error.message },
-      { status: 500, headers: { "Cache-Control": "no-store" } } // No caching for errors
+      { status: 500, headers: { "Cache-Control": "no-store" } }
     );
+  } finally {
+    transaction.finish();
   }
 }
+
+
+
+
+
+
+
+
+

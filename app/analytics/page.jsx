@@ -3,11 +3,12 @@ import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
 import { getServerSession } from "next-auth";
 import { options } from "../api/auth/[...nextauth]/options";
 import { redirect } from "next/navigation";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 async function fetchProducts() {
   try {
     const response = await fetch("https://dummyjson.com/products", {
-      next: { revalidate: 3600 }, 
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) {
@@ -68,13 +69,17 @@ const Page = async () => {
   }
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold text-black mb-4">Products Analytics</h2>
-      <Suspense fallback={<div>Loading analytics...</div>}>
-        {/* <p>{session?.user?.role}</p> */}
-        <AnalyticsDashboard data={productsData} userData={userData} />
-      </Suspense>
-    </div>
+    <ErrorBoundary>
+      <div className="p-4">
+        <h2 className="text-2xl font-bold text-black mb-4">
+          Products Analytics
+        </h2>
+        <Suspense fallback={<div>Loading analytics...</div>}>
+          {/* <p>{session?.user?.role}</p> */}
+          <AnalyticsDashboard data={productsData} userData={userData} />
+        </Suspense>
+      </div>
+    </ErrorBoundary>
   );
 };
 

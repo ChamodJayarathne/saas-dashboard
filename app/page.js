@@ -13,7 +13,7 @@
 
 //     if (!response.ok) {
 //       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
+//     }</ErrorBoundary>
 
 //     const data = await response.json();
 //     return data;
@@ -161,9 +161,8 @@ import { Activity, Users, DollarSign, ArrowUp } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { options } from "./api/auth/[...nextauth]/options";
 import { redirect } from "next/navigation";
-// import Loading from '@/components/Loading';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
-//
 
 async function fetchProducts() {
   try {
@@ -234,7 +233,7 @@ const DashboardPage = async () => {
   const session = await getServerSession(options);
 
   if (!session) {
-    redirect("/api/auth/signin?callbackUrl=/dashboard");
+    redirect("/api/auth/signin?callbackUrl=/");
   }
 
   const [productsData, userData] = await Promise.all([
@@ -246,11 +245,24 @@ const DashboardPage = async () => {
   //   return <Loading />;
   // }
 
-  const products = productsData.products;
-  const users = userData.current;
+  // const products = productsData.products;
+  // const users = userData.current;
+
+  // const totalRevenue = products.reduce(
+  //   (sum, product) => sum + product.price * product.stock,
+  //   0
+  // );
+
+  if (!productsData || !userData) {
+    console.error("Failed to fetch data:", { productsData, userData });
+    return <div>Failed to load data. Please try again later.</div>;
+  }
+
+  const products = productsData.products || [];
+  const users = userData.current || 0;
 
   const totalRevenue = products.reduce(
-    (sum, product) => sum + product.price * product.stock,
+    (sum, product) => sum + (product.price || 0) * (product.stock || 0),
     0
   );
 
@@ -276,6 +288,7 @@ const DashboardPage = async () => {
   ];
 
   return (
+    <ErrorBoundary>
     <div className="space-y-6 py-6">
       <h2 className="text-2xl font-semibold text-black">Dashboard Overview</h2>
 
@@ -326,6 +339,7 @@ const DashboardPage = async () => {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 };
 

@@ -13,7 +13,6 @@ export const options = {
         if (profile?.email == "chamodjayarathne500@gmail.com") {
           userRole = "admin";
         }
-
         return {
           ...profile,
           role: userRole,

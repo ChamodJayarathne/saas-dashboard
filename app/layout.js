@@ -13,7 +13,7 @@
 //           {/* <NotificationProvider> */}
 //             <SidebarProvider>
 //               <div className="min-h-screen bg-gray-50">
-//                 <Nav />
+//                 <Nav /import ErrorBoundary from '@/components/ErrorBoundary';>
 //                 <LayoutClient>{children}</LayoutClient>
 //               </div>
 //             </SidebarProvider>
@@ -31,6 +31,19 @@ import Nav from "./(components)/Nav";
 import LayoutClient from "./LayoutClient";
 import { SidebarProvider } from "./(components)/SidebarProvider";
 import AuthProvider from "./(components)/AuthProvider";
+import * as Sentry from "@sentry/nextjs";
+import { browserTracingIntegration } from "@sentry/browser";
+
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: process.env.NEXT_PUBLIC_ENVIRONMENT,
+  release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+  // integrations: [new Sentry.BrowserTracing()],
+  integrations: [browserTracingIntegration()],
+  tracesSampleRate: 0.2,
+  profilesSampleRate: 0.1,
+});
 
 const RootLayout = ({ children }) => {
   return (
