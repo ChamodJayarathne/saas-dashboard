@@ -14,9 +14,6 @@
 //   debug: false,
 // });
 
-
-
-
 // sentry.server.config.js
 // import * as Sentry from '@sentry/nextjs';
 
@@ -32,11 +29,13 @@
 //   tracesSampleRate: 0.2,
 // });
 
-
-import * as Sentry from '@sentry/nextjs';
-import { httpIntegration } from '@sentry/node'; // HTTP integration
-import { mongoIntegration } from '@sentry/node'; // MongoDB integration
-import { expressIntegration } from '@sentry/node'; // Express integration
+import * as Sentry from "@sentry/nextjs";
+import { httpIntegration } from "@sentry/node"; // HTTP integration
+import { mongoIntegration } from "@sentry/node"; // MongoDB integration
+import { expressIntegration } from "@sentry/node"; // Express integration
+// import { Http } from "@sentry/node";
+// import { Mongo } from "@sentry/integrations";
+// import { Express } from "@sentry/integrations";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -46,6 +45,9 @@ Sentry.init({
     httpIntegration({ tracing: true }), // HTTP integration
     mongoIntegration(), // MongoDB integration
     expressIntegration(), // Express integration
+    // new Http({ tracing: true }),
+    // new Mongo(),
+    // new Express(),
   ],
   tracesSampleRate: 0.2,
 });

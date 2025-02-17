@@ -189,6 +189,28 @@ export async function POST(req) {
       level: Sentry.Severity.Info,
     });
 
+    // Enhanced notification
+    const notificationData = {
+      title: "New User Registration",
+      message: `New user registered: ${userData.name} (${userData.email})`,
+      type: "user",
+      timestamp: new Date().toISOString(),
+    };
+
+    if (process.env.NODE_ENV === "production") {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notificationData),
+      });
+    } else {
+      const res = await fetch("http://localhost:3000/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notificationData),
+      });
+    }
+
     return NextResponse.json(
       { message: "User created successfully" },
       {

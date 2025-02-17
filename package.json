@@ -29,7 +29,8 @@
     "recharts": "^2.15.1",
     "saas-dashboard": "file:",
     "stripe": "^17.6.0",
-    "tailwind-merge": "^3.0.1"
+    "tailwind-merge": "^3.0.1",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, createContext, useContext, useMemo } from "react";
+import React, {
+  useState,
+  createContext,
+  useContext,
+  useMemo,
+  useEffect,
+} from "react";
 import { useSidebar } from "./SidebarProvider";
 import {
   Menu,
@@ -19,6 +25,31 @@ import Image from "next/image";
 const NavClient = ({ session }) => {
   const { isSidebarOpen, setIsSidebarOpen } = useSidebar();
   const [notifications, setNotifications] = useState([]);
+  const [ws, setWs] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    const websocket = new WebSocket("ws://localhost:3001/api/ws");
+    setWs(websocket);
+
+    websocket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      setNotifications((prev) => [{ ...message, read: false }, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    };
+
+    return () => {
+      websocket.close();
+    };
+  }, []);
+
+  const markAsRead = () => {
+    setNotifications(
+      (prev) => prev.map((n) => ({ ...n, read: true })),
+      setUnreadCount(0)
+    );
+  };
 
   const menuItems = useMemo(
     () => [
@@ -56,12 +87,58 @@ const NavClient = ({ session }) => {
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
-              <button className="p-2 rounded-lg hover:bg-gray-100">
+              {/* <button className="p-2 rounded-lg hover:bg-gray-100">
                 <Bell className="w-6 h-6 text-black" />
                 {notifications.length > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
                 )}
+              </button> */}
+              <button
+                className="p-2 rounded-lg hover:bg-gray-100 relative"
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  if (!showNotifications) markAsRead();
+                }}
+              >
+                <Bell className="w-6 h-6 text-black" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-xl max-h-96 overflow-y-auto">
+                  <div className="p-4 border-b">
+                    <h3 className="text-lg font-semibold">Notifications</h3>
+                  </div>
+                  <div className="divide-y">
+                    {notifications.length === 0 ? (
+                      <p className="p-4 text-gray-500">No notifications</p>
+                    ) : (
+                      notifications.map((notification, index) => (
+                        <div
+                          key={index}
+                          className={`p-4 ${
+                            !notification.read ? "bg-blue-50" : ""
+                          }`}
+                        >
+                          <p className="text-sm font-medium">
+                            {notification.title}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(notification.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             {/* <NotificationBell /> */}
 
